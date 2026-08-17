@@ -50,9 +50,27 @@
           pass+= pool [number%pool.length]
           counter =0
         }
-        if (options.size == pass.length){
-          break
-        }
+        // version 1.1
+        if (options.size == pass.length) {
+            let passArr = pass.split('');
+            let usedPositions = [];
+
+            function replaceRandom(set) {
+                let pos;
+                do { pos = crypto.getRandomValues(new Uint8Array(1))[0] % passArr.length; }
+                while (usedPositions.includes(pos));
+                usedPositions.push(pos);
+                passArr[pos] = set[crypto.getRandomValues(new Uint8Array(1))[0] % set.length];
+            }
+
+            if (options.upper   && !/[A-Z]/.test(pass)) replaceRandom(SETS.upper);
+            if (options.digits  && !/[0-9]/.test(pass)) replaceRandom(SETS.digits);
+            if (options.symbols && !/[^a-zA-Z0-9]/.test(pass)) replaceRandom(SETS.symbols);
+            if (!/[a-z]/.test(pass)) replaceRandom(SETS.lower);
+
+            pass = passArr.join('');
+            break;
+        }        
 
       }
       return pass

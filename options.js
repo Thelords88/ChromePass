@@ -7,18 +7,27 @@ function sendMessage(action, data = {}) {
   return new Promise(resolve => chrome.runtime.sendMessage({ action, ...data }, resolve));
 }
 
-// ── INIT ──
+//  INIT 
 async function init() {
-const s = await chrome.storage.session.get('cp_master');
-const saved = s.cp_master;
-  if (saved) { masterPassword = saved; showShell(); await loadVault(); return; }
-  showGate();
+    const s = await chrome.storage.session.get('cp_master');
+    const saved = s.cp_master;
+    if (saved) { 
+        masterPassword = saved; 
+        showShell(); 
+        await loadVault();
+        const backup = await chrome.storage.local.get('last_backup');
+        if (backup.last_backup) {
+            document.getElementById('last-backup-time').textContent = backup.last_backup;
+        }
+        return; 
+    }
+    showGate();
 }
 
 function showGate()  { document.getElementById('gate').classList.remove('hidden'); document.getElementById('shell').classList.add('hidden'); }
 function showShell() { document.getElementById('gate').classList.add('hidden');    document.getElementById('shell').classList.remove('hidden'); }
 
-// ── GATE ──
+//  GATE 
 document.getElementById('gate-btn').addEventListener('click', async () => {
   const pass  = document.getElementById('gate-password').value;
   const errEl = document.getElementById('gate-error');
@@ -36,7 +45,7 @@ await chrome.storage.session.set({ cp_master: pass });
 });
 document.getElementById('gate-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gate-btn').click(); });
 
-// ── LOCK ──
+//  LOCK 
 document.getElementById('sidebar-lock').addEventListener('click', async () => {
   masterPassword = null;
 await chrome.storage.session.remove('cp_master');
@@ -46,7 +55,7 @@ await chrome.storage.session.remove('cp_master');
   showGate();
 });
 
-// ── NAV ──
+//  NAV 
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -56,7 +65,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
   });
 });
 
-// ── VAULT ──
+//  VAULT 
 async function loadVault() {
   const res = await sendMessage('getVault', { masterPassword });
   if (!res?.success) { showToast('Failed to load vault', 'error'); return; }
@@ -70,7 +79,7 @@ function updateCount() {
     `${allCredentials.length} saved credential${allCredentials.length !== 1 ? 's' : ''}`;
 }
 
-// ── RENDER ──
+//  RENDER 
 function renderCredentials(creds) {
   const list = document.getElementById('credentials-list');
   if (!creds.length) {
@@ -138,7 +147,7 @@ function credRowHTML(c) {
   </div>`;
 }
 
-// ── SEARCH ──
+//  SEARCH 
 document.getElementById('search-input').addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
   renderCredentials(allCredentials.filter(c =>
@@ -148,7 +157,7 @@ document.getElementById('search-input').addEventListener('input', e => {
   ));
 });
 
-// ── ADD ──
+//  ADD 
 document.getElementById('add-btn').addEventListener('click', () => {
   document.getElementById('modal-cred-title').textContent = 'Add Credential';
   document.getElementById('cred-edit-id').value = '';
@@ -157,6 +166,9 @@ document.getElementById('add-btn').addEventListener('click', () => {
   document.getElementById('modal-delete-btn').classList.add('hidden');
   document.getElementById('modal-sbar').style.width = '0%';
   document.getElementById('modal-slabel').innerHTML = '&nbsp;';
+  // version 1.1
+  document.getElementById('cred-url').readOnly = false;
+  //
   openModal('modal-cred');
 });
 
@@ -167,11 +179,15 @@ function openEditModal(id) {
   document.getElementById('cred-edit-id').value    = c.id;
   document.getElementById('cred-name').value       = c.name || '';
   document.getElementById('cred-url').value        = c.url || '';
+    // Version 1.1
+  document.getElementById('cred-url').readOnly = true;
+  //
   document.getElementById('cred-username').value   = c.username || '';
   document.getElementById('cred-password').value   = c.password || '';
   document.getElementById('cred-note').value       = c.note || '';
   document.getElementById('modal-cred-error').classList.add('hidden');
   document.getElementById('modal-delete-btn').classList.remove('hidden');
+
   updateStrength(c.password || '');
   openModal('modal-cred');
 }
@@ -206,7 +222,7 @@ document.getElementById('save-cred-btn').addEventListener('click', async () => {
 
 function showFieldError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 
-// ── DELETE ──
+//  DELETE 
 function openDeleteModal(id) {
   const c = allCredentials.find(x => x.id === id);
   if (!c) return;
@@ -228,7 +244,7 @@ document.getElementById('confirm-delete-btn').addEventListener('click', async ()
   else showToast('Delete failed', 'error');
 });
 
-// ── PASSWORD VISIBILITY & STRENGTH ──
+//  PASSWORD VISIBILITY & STRENGTH 
 document.getElementById('toggle-pass-vis').addEventListener('click', () => {
   const inp = document.getElementById('cred-password');
   inp.type = inp.type === 'password' ? 'text' : 'password';
@@ -257,17 +273,17 @@ function updateStrength(pw) {
   lbl.textContent = l.t; lbl.style.color = l.c;
 }
 
-// ── GENERATE INTO MODAL ──
+//  GENERATE INTO MODAL 
 document.getElementById('gen-for-cred').addEventListener('click', () => {
   try {
-    const pass = passwordGeneration({ size: 16, upper: true, digits: true, symbols: false });
+    const pass = passwordGeneration({ size: 20, upper: true, digits: true, symbols: true });
     const inp  = document.getElementById('cred-password');
     inp.value = pass; inp.type = 'text';
     updateStrength(pass);
   } catch { showToast('Generator error', 'error'); }
 });
 
-// ── SECURITY CHECK ──
+//  SECURITY CHECK 
 document.getElementById('run-check-btn').addEventListener('click', async () => {
   const btn = document.getElementById('run-check-btn');
   const res = document.getElementById('security-results');
@@ -333,7 +349,7 @@ function secSection(title, items) {
   </div>`;
 }
 
-// ── GENERATOR ──
+//  GENERATOR 
 document.getElementById('gen-length').addEventListener('input', e => document.getElementById('len-val').textContent = e.target.value);
 
 document.getElementById('gen-btn').addEventListener('click', () => {
@@ -362,29 +378,66 @@ document.getElementById('gen-copy-btn').addEventListener('click', () => {
 
 function passwordGeneration(options) {
   if (options.size > 64 || options.size < 8) throw new Error('Size must be 8–64');
-  const SETS = { lower:'abcdefghijklmnopqrstuvwxyz', upper:'ABCDEFGHIJKLMNOPQRSTUVWXYZ', digits:'0123456789', symbols:'!@#$%^&*()-_=+[]{};:,.<>/?' };
+  const SETS = { 
+    lower:'abcdefghijklmnopqrstuvwxyz', 
+    upper:'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 
+    digits:'0123456789', 
+    symbols:'!@#$%^&*()-_=+[]{};:,.<>/?' 
+  };
   let pool = SETS.lower;
   if (options.upper)   pool += SETS.upper;
   if (options.digits)  pool += SETS.digits;
   if (options.symbols) pool += SETS.symbols;
   let pass = '', counter = 0;
   while (true) {
-    let n = crypto.getRandomValues(new Uint8Array(1))[0];
-    if (n > pool.length - 1) { n = crypto.getRandomValues(new Uint8Array(1))[0]; counter++; }
-    else { pass += pool[n]; counter = 0; }
-    if (counter >= Math.floor(Math.random()*(6-3))+3) { pass += pool[n%pool.length]; counter = 0; }
-    if (options.size === pass.length) break;
+    let number = crypto.getRandomValues(new Uint8Array(1))[0];
+    if (number > pool.length - 1) { number = crypto.getRandomValues(new Uint8Array(1))[0]; counter++; }
+    else { pass += pool[number]; counter = 0; }
+    if (counter >= Math.floor(Math.random()*(6-3))+3) { pass += pool[number%pool.length]; counter = 0; }
+    if (options.size === pass.length) { 
+      //version 1.1
+      let passArr = pass.split('');
+      let usedPositions = [];
+      function replaceRandom(set) {
+        let pos;
+        do { pos = crypto.getRandomValues(new Uint8Array(1))[0] % passArr.length; }
+        while (usedPositions.includes(pos));
+        usedPositions.push(pos);
+        passArr[pos] = set[crypto.getRandomValues(new Uint8Array(1))[0] % set.length];
+      }
+      if (options.upper   && !/[A-Z]/.test(pass)) replaceRandom(SETS.upper);
+      if (options.digits  && !/[0-9]/.test(pass)) replaceRandom(SETS.digits);
+      if (options.symbols && !/[^a-zA-Z0-9]/.test(pass)) replaceRandom(SETS.symbols);
+      if (!/[a-z]/.test(pass)) replaceRandom(SETS.lower);
+      pass = passArr.join('');
+      break;
+    }
   }
   return pass;
 }
 
 
+//  SETTINGS 
 
-// ── SETTINGS ──
 document.getElementById('export-json-btn').addEventListener('click', async () => {
-  const res = await sendMessage('exportVault', { masterPassword });
-  if (res?.success) showToast('Vault exported ✓', 'success');
-  else showToast('Export failed', 'error');
+    const res = await sendMessage('exportVault', { masterPassword });
+    if (res?.success) {
+        const blob = new Blob([res.result], { type: "text/csv" });
+        
+
+
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Vault_export.csv";
+        a.click();
+
+        URL.revokeObjectURL(url);
+        showToast('Vault exported ✓', 'success');
+    } else {
+        showToast('Export failed', 'error');
+    }
 });
 
 document.getElementById('import-json-btn').addEventListener('click', () => document.getElementById('import-json-file').click());
@@ -392,32 +445,74 @@ document.getElementById('import-json-btn').addEventListener('click', () => docum
 document.getElementById('import-json-file').addEventListener('change', async e => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = async ev => {
+reader.onload = async ev => {
     try {
-      const parsed = JSON.parse(ev.target.result);
-      if (!parsed.credentials || !Array.isArray(parsed.credentials)) throw new Error('Invalid format');
-      let count = 0;
-      for (const cred of parsed.credentials) {
-        const res = await sendMessage('addCredential', { masterPassword, input: { name: cred.name||'', url: cred.url||'', username: cred.username||'', password: cred.password||'', note: cred.note||'' } });
-        if (res?.success) count++;
-      }
-      showToast(`Imported ${count} credentials`, 'success');
-      await loadVault();
+        const res = await sendMessage('importVault', { masterPassword, csvString: ev.target.result });
+        if (res?.success) {
+            showToast('Vault imported ✓', 'success');
+            await loadVault();
+        } else {
+            showToast('Import failed', 'error');
+        }
     } catch { showToast('Import failed — invalid file', 'error'); }
     e.target.value = '';
-  };
+};
   reader.readAsText(file);
+});
+
+//  SYNC ENGINE 
+// Sign up
+document.getElementById('signup-sync-btn').addEventListener('click', async () => {
+    const email = document.getElementById('sync-email').value;
+    const syncPassword = document.getElementById('sync-password').value;
+    const res = await sendMessage('signUp', { email, syncPassword });
+    if (res?.success) showToast('Account created ✓', 'success');
+    else showToast(res?.error || 'Sign up failed', 'error');
+});
+
+// Sign in
+document.getElementById('signin-sync-btn').addEventListener('click', async () => {
+    const email = document.getElementById('sync-email').value;
+    const syncPassword = document.getElementById('sync-password').value;
+    const res = await sendMessage('signIn', { email, syncPassword });
+    if (res?.success) showToast('Signed in ✓', 'success')  
+    else showToast(res?.error || 'Sign in failed', 'error');
+});
+// Sign out
+document.getElementById('signout-sync-btn').addEventListener('click', async () => {
+    const res = await sendMessage('signOut');
+    if (res?.success) showToast('Signed Out ✓', 'success')  
+    else showToast(res?.error || 'Sign Out failed', 'error');
+});
+// BackUp Vault
+document.getElementById('backup-btn').addEventListener('click', async () => {
+    const res = await sendMessage('backupVault');
+    if (res?.success) {
+      showToast('Data Backed up ✓', 'success') 
+      document.getElementById('last-backup-time').textContent = res.serverTime;}
+ 
+    else showToast(res?.error || 'Backup failed', 'error');
+});
+// Restore Vault
+document.getElementById('restore-btn').addEventListener('click', async () => {
+    const res = await sendMessage('restoreVault');
+    if (res?.success) showToast('Restored vault  ✓', 'success') 
+    else showToast(res?.error || 'Restoring failed', 'error');
 });
 
 
 
-// ── MODALS ──
+
+
+
+
+//  MODALS 
 function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden');    }
 document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => closeModal(el.dataset.close)));
 document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); }));
 
-// ── TOAST ──
+//  TOAST 
 let toastTimer = null;
 function showToast(msg, type = '') {
   const el = document.getElementById('toast');
@@ -428,7 +523,7 @@ function showToast(msg, type = '') {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
 }
 
-// ── UTILS ──
+//  UTILS 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function faviconHTML(url, name) {
   try { const h = new URL(url).hostname; return `<img src="https://www.google.com/s2/favicons?domain=${h}&sz=32" onerror="this.outerHTML='${(name||'?').charAt(0).toUpperCase()}'">` ; }

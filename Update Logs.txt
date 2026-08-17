@@ -1,0 +1,26 @@
+Version 0.9 (Beta):
+...
+
+Version 1.0 : 
+- Removed unused UI elements from settings page
+- Added a partial fix to Export to Json 
+*Known issues: 
+1. File exports to JSON, but do does not export the data correctly (prints JSON object).
+2. Credential field does not detect all websites fields
+3. Unable to edit saved credential website
+4. Password generator only generates with Upper and Lower case while adding credentials manually
+5. Password generator does not guarantee selected options 
+6. Credential field popup to fill in information does not show up/has long delay before showing up
+7. UI bugs
+
+Version 1.1:
+- Removed JSON import/export
+- Added CSV import/export support
+- Improved credential field detection
+- Added online Backup/Restore function via SuperBase
+- Fixed character selection of generated password was not guaranteed
+- Fixed & improved password generated while adding/editing a credential, increased length to 20 (from 16)
+- Removed edit URL option while editing saved credential 
+- Fixed delay in pop up to fill in field (Changed to on Click to show pop up)
+- Improved UI
+

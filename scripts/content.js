@@ -1,8 +1,6 @@
-// ══════════════════════════════════════════════
-//  content.js — ChromePass
-//  1. Autofill dropdown on username field click
-//  2. Save prompt after manual credential entry
-// ══════════════════════════════════════════════
+// Autofill dropdown when username field clicked
+// Save prompt after manual credential entry
+
 
 const hostname = location.hostname;
 let dropdown = null;
@@ -10,7 +8,7 @@ let savePrompt = null;
 let lastDetectedUsername = '';
 let lastDetectedPassword = '';
 
-// ── INJECT STYLES ─────────────────────────────
+//  INJECT STYLES 
 const style = document.createElement('style');
 style.textContent = `
   #cp-dropdown {
@@ -123,7 +121,7 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// ── UTILS ─────────────────────────────────────
+// UTILS 
 function sendMessage(action, data = {}) {
   return new Promise(resolve =>
     chrome.runtime.sendMessage({ action, ...data }, resolve)
@@ -133,8 +131,10 @@ function sendMessage(action, data = {}) {
 function removeDropdown()  { if (dropdown)   { dropdown.remove();   dropdown = null;   } }
 function removeSavePrompt(){ if (savePrompt) { savePrompt.remove(); savePrompt = null; } }
 
-// ── AUTOFILL DROPDOWN ─────────────────────────
-async function showDropdown(usernameField) {
+//  AUTOFILL DROPDOWN 
+
+
+async function showDropdown(usernameField,targetField) {
   removeDropdown();
 
   const res = await sendMessage('getMatchingCredentials', { hostname });
@@ -170,7 +170,7 @@ async function showDropdown(usernameField) {
     });
   }
 
-  const rect = usernameField.getBoundingClientRect();
+  const rect = targetField.getBoundingClientRect();
   dropdown.style.top   = `${rect.bottom + window.scrollY + 4}px`;
   dropdown.style.left  = `${rect.left   + window.scrollX}px`;
   dropdown.style.width = `${Math.max(280, rect.width)}px`;
@@ -189,18 +189,21 @@ function fillCredential(cred, usernameField) {
   });
 }
 
-// ── USERNAME FIELD CLICK LISTENER ─────────────
-document.addEventListener('focusin', e => {
-  const { usernameField } = detectFields();
-  if (e.target === usernameField) showDropdown(usernameField);
-  else removeDropdown();
-});
+// USERNAME FIELD CLICK LISTENER 
+//version 1.1 (changed from 'focusin' to'click'), pop up will show on click only
+// instead of auto showing up
 
 document.addEventListener('click', e => {
-  if (dropdown && !dropdown.contains(e.target)) removeDropdown();
+  const usernameField = findUsernameField();
+  const passwordField = findPasswordField();
+  if (e.target === usernameField || e.target === passwordField)     showDropdown(usernameField, e.target);
+
+  else if (dropdown && !dropdown.contains(e.target)) removeDropdown();
 });
 
-// ── SAVE PROMPT ───────────────────────────────
+
+
+// SAVE PROMPT 
 document.addEventListener('submit', e => {
   const { usernameField, passwordField } = detectFields();
   if (!usernameField || !passwordField) return;
@@ -275,15 +278,14 @@ function showSavePrompt(username) {
   document.body.appendChild(savePrompt);
 }
 
-// ── AUTOFILL MESSAGE FROM POPUP ───────────────
+// AUTOFILL MESSAGE FROM POPUP 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.action === 'autofill') {
     const { usernameField } = detectFields();
     fillCredential(message.credential, usernameField);
   }
 });
-
-// ── FIELD DETECTION ───────────────────────────
+//  FIELD DETECTION 
 function findPasswordField() {
   const all = document.querySelectorAll('input[type="password"]');
   if (all.length > 1) return null;
@@ -294,7 +296,13 @@ function findUsernameField() {
   return document.querySelector('input[autocomplete*="user"]') ||
     document.querySelector('input[autocomplete*="email"]')     ||
     document.querySelector('input[type="email"]')              ||
-    document.querySelector('input[id="username"]');
+    document.querySelector('input[id="username"]')             ||
+    // version 1.1
+    document.querySelector('input[name="username"]')           ||
+    document.querySelector('input[name="email"]')              ||
+    document.querySelector('input[placeholder*="username" i]') ||
+    document.querySelector('input[placeholder*="email" i]');
+    //
 }
 
 function detectFields() {

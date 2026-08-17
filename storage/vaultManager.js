@@ -17,38 +17,94 @@ async function saveVault(credentials, masterPassword){
     return
 }
 
-// Validation of json isn't completed/will be in a different class
-async function importVault(jsonString) {
-    const temp = JSON.parse(jsonString);
-    return temp
+// OLD IMPORT FUNCTION (JSON)
+// // Validation of json isn't completed/will be in a different class
+// async function importVault(jsonString) {
+//     const temp = JSON.parse(jsonString);
+
+//     return temp
+// }
+async function importVault(masterPassword,csvString){
+const creds = (await loadVault(masterPassword)).credentials;
+
+    const result = csvToCrednetials(csvString)
+    for (const res of result){
+    creds.push(res)
+    }
+    await saveVault({ credentials: creds }, masterPassword)
+    return 
 }
+
+/*
+Structure has to match this:
+{
+  "credentials": [
+    {
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "name": "Claude AI",
+      "url": "https://claude.ai",
+      "username": "alhassan@example.com",
+      "password": "Cl@ude_Dem0!2026",
+      "note": "AI assistant account",
+      "created": 1705312200000,
+      "modified": 1705312200000
+    }, ...
+        ]
+         }
+
+*/
 
 // Exports vault in a json file (INCOMPLETE)
 async function exportVault(masterPassword){
-    const jsonString= JSON.stringify(await loadVault(masterPassword));
 
-    const blob = new Blob([jsonString], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    try{
-            await chrome.downloads.download({
-        url: url,
-        filename: "Vault_export.json",
-        saveAs: true
-    });
-    } finally{
-        URL.revokeObjectURL(url);
+   const result = credentialsToCSV((await loadVault(masterPassword)).credentials);
+   return result
+}
+
+
+function credentialsToCSV(credentials) {
+    let loadingCSV = ["name,url,username,password,note"];
+
+
+    for (const cred of credentials){
+        
+    loadingCSV.push(
+    `${cred.name},${cred.url},${cred.username},${cred.password},${cred.note}`
+    );
     }
-    return
+    return loadingCSV.join("\n");
 }
 
+function csvToCrednetials(csvString) {
+const loaded = csvString.split(/\r?\n/);
+    let counter = 0;
+    let ready = [];
+    for (const load of loaded){
 
-// INCOMPLETE
-async function credentialsToCSV(credentials) {
-    
-}
+        if (counter ==0){
+         counter++;
+        }
+        else{
+            if (load.trim() === "") continue;
 
-async function csvToCrednetials(csvString) {
-    
+         let temp = load.split(",")
+
+            const newEntry = {
+            id: crypto.randomUUID(),
+            name: temp[0],
+            url: temp[1],
+            username: temp[2],
+            password: temp[3],
+            note: temp[4],
+            created: Date.now(),
+            modified: Date.now()  
+        
+            }
+            ready.push(newEntry)
+        }
+    }
+            return ready
+
     /*
     csv headers: (Google chrome format)
     name,url,username,password,note
@@ -125,7 +181,7 @@ async function editCredential(masterPassword,id,input){
     
 }
 
-export { loadVault, saveVault, addCredential, deleteCredential, editCredential, exportVault };
+export { loadVault, saveVault, addCredential, deleteCredential, editCredential, exportVault, importVault };
 
 /* JSON Structure
 
@@ -137,3 +193,29 @@ export { loadVault, saveVault, addCredential, deleteCredential, editCredential, 
 } 
 */
 
+// export vault old code
+
+    //     console.log("Hi guys2")
+
+    // const jsonString= JSON.stringify(await loadVault(masterPassword));
+    // console.log("Hi guys")
+    // console.log(jsonString.toString());
+    //     console.log(jsonString);
+
+    //  return jsonString;
+    // // const blob = new Blob([jsonString], {type:"application/json"});
+    // // const url = URL.createObjectURL(blob);
+    // // try{
+    // //         await chrome.downloads.download({
+    // //     url: url,
+    // //     filename: "Vault_export.json",
+    // //     saveAs: true
+    // // });
+    // // } finally{
+    // //     URL.revokeObjectURL(url);
+    // // }
+    // // return
+    
+    /*
+    CSV PART
+    */

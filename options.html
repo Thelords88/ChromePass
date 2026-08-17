@@ -409,59 +409,49 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </div>
         <div class="settings-body">
 
-          <!-- <div class="settings-section">
-            <div class="settings-heading">Security</div>
 
-            <div class="settings-row">
-              <div>
-                <label>Auto-lock</label>
-                <small>Lock the vault automatically after a period of inactivity (Does not work)</small>
-              </div>
-              <select id="lock-timeout-select" class="form-select">
-                <option value="0">Never</option>
-                <option value="1">1 minute</option>
-                <option value="2">2 minutes</option>
-                <option value="5" selected>5 minutes</option>
-                <option value="10">10 minutes</option>
-              </select>
-            </div>
-          </div> -->
 
           <div class="settings-section">
             <div class="settings-heading">Data</div>
             <div class="settings-row">
-              <div><label>Export Vault (JSON)</label><small>Download a backup of all credentials (Does not work)</small></div>
+              <div><label>Export Vault (CSV)</label><small>Download a backup of all credentials in CSV</small></div>
               <button id="export-json-btn" class="btn btn-ghost btn-sm">⬇️ Export</button>
             </div>
             <div class="settings-row">
-              <div><label>Import Vault (JSON)</label><small>Restore credentials from a JSON backup</small></div>
+              <div><label>Import Vault (CSV)</label><small>Restore credentials from a CSV backup</small></div>
               <button id="import-json-btn" class="btn btn-ghost btn-sm">⬆️ Import</button>
-              <input type="file" id="import-json-file" accept=".json" class="hidden">
+              <input type="file" id="import-json-file" accept=".csv" class="hidden">
             </div>
-            <div class="settings-row disabled">
-              <div><label>Export as CSV <span class="badge-soon">Coming soon</span></label><small>Export in Chrome password manager format</small></div>
-              <button class="btn btn-ghost btn-sm" disabled>⬇️ Export</button>
-            </div>
-            <div class="settings-row disabled">
-              <div><label>Import from CSV <span class="badge-soon">Coming soon</span></label><small>Import from Chrome or other managers</small></div>
-              <button class="btn btn-ghost btn-sm" disabled>⬆️ Import</button>
-            </div>
-          </div>
 
-          <div class="settings-section">
-            <div class="settings-heading">Sync</div>
-            <div class="settings-row disabled">
-              <div><label>Cloud Sync <span class="badge-soon">Coming soon</span></label><small>Sync your vault across devices</small></div>
-              <label class="toggle"><input type="checkbox" disabled><span class="toggle-slider"></span></label>
+
+            <div class="settings-section">
+                <div class="settings-heading">Sync</div>
+                <div class="settings-row">
+                    <div><label>Email</label><small>Your sync account email</small></div>
+                    <input type="email" class="form-input" id="sync-email" placeholder="you@example.com" style="width:200px">
+                </div>
+                <div class="settings-row">
+                    <div><label>Sync Password</label><small>Separate from your master password</small></div>
+                    <input type="password" class="form-input" id="sync-password" placeholder="Sync password" style="width:200px">
+                </div>
+                <div class="settings-row">
+                    <div><label>Last backup</label><small id="last-backup-time">Never</small></div>
+                    <div style="display:flex;gap:8px">
+                        <button id="signup-sync-btn" class="btn btn-ghost btn-sm">☁️ Setup</button>
+                        <button id="signin-sync-btn" class="btn btn-ghost btn-sm">🔑 Sign In</button>
+                        <button id="backup-btn" class="btn btn-ghost btn-sm">⬆️ Backup</button>
+                        <button id="restore-btn" class="btn btn-ghost btn-sm">⬇️ Restore</button>
+                        <button id="signout-sync-btn" class="btn btn-ghost btn-sm">🚪 Sign Out</button>
+                    </div>
+                </div>
             </div>
-          </div>
 
           
 
           <div class="settings-section">
             <div class="settings-heading">About</div>
             <div class="settings-row">
-              <div><label>Version</label><small>ChromePass v1.0</small></div>
+              <div><label>Version</label><small>ChromePass v1.1</small></div>
             </div>
           </div>
 

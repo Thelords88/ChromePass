@@ -1,4 +1,7 @@
+// takes masterpassword and salt, turns it to AES-256 key
+
 async function deriveKey (masterPassword, salt){
+    // turns the password to a raw key for PBKDF2
 const rawPass = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(masterPassword),
@@ -6,7 +9,7 @@ const rawPass = await crypto.subtle.importKey(
     false,
     ["deriveKey"]
 );
-
+// Encrypts ussing the AES-256, 310000 times, which results in AES-GCM key
 const crypticPass = await crypto.subtle.deriveKey(
     {name: "PBKDF2", salt, iterations: 310000, hash: "SHA-256"},
     rawPass,
@@ -18,7 +21,9 @@ const crypticPass = await crypto.subtle.deriveKey(
 
 return crypticPass
 }
-
+// Encrypts using AE-SGCM key derived from derive.key; using random 16 byte salt
+//  and 12 bit random IV (initilization vector)
+// Output is the salt + iv + cipherText (in base64) (everything needed for decryption)
 async function encrypt(plaintext, masterPassword){
 
     const salt =  crypto.getRandomValues(new Uint8Array(16));
@@ -71,6 +76,7 @@ async function decrypt(encryptedBase64, masterPassword){
 
 
 // INCOMPLETE --- COMPLETE
+// Used for first time password creation and storing hash stirng + salt
 async function hashMasterPassword(masterPassword) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
 
@@ -96,7 +102,6 @@ async function hashMasterPassword(masterPassword) {
 }
 
 async function cryptoVerifyMasterPassword(masterPassword, hash_string, salt_string){
-    // NOT USED  
     //const hashBytes = Uint8Array.from(atob(hash_string), c => c.charCodeAt(0));
         const saltBytes = Uint8Array.from(atob(salt_string), c => c.charCodeAt(0));
         const keyMaterial = await crypto.subtle.importKey(

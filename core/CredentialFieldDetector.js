@@ -14,8 +14,16 @@ function findPasswordField(){
 function findUsernameField(){
     return document.querySelector('input[autocomplete*="user"]') ||
     document.querySelector('input[autocomplete*="email"]') ||
+
     document.querySelector('input[type="email"]') ||
-    document.querySelector('input[id="username"]');
+    document.querySelector('input[id="username"]')||
+
+    document.querySelector('input[name="username"]') ||
+    // Version 1.1
+    document.querySelector('input[name="email"]') ||
+
+    document.querySelector('input[placeholder*="username" i]') ||
+    document.querySelector('input[placeholder*="email" i]');
 }
 
 function detectFields(){
